@@ -92,6 +92,8 @@ $pageTitle = 'Auth | San Pandas';
     <div class="login-page">
         <div class="login-card glass-panel" style="backdrop-filter: blur(20px);">
             <div style="text-align: center; margin-bottom: 30px;">
+                <img src="https://sanpandas.com/media/identity/logo-nbg.webp" alt="San Pandas"
+                    style="width: 80px; height: auto; display: block; margin: 0 auto 12px;">
                 <a href="http://academy.sanpandas.com/" class="logo-text" style="font-size: 2rem;">San
                     <span>Pandas</span></a>
                 <p class="text-muted" style="margin-top: 10px;">Enter your registered email to receive a secure login

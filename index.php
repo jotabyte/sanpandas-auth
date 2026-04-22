@@ -1,5 +1,5 @@
 <?php
-$pageTitle = 'Login | San Pandas';
+$pageTitle = 'Auth | San Pandas';
 ?>
 <!DOCTYPE html>
 <html lang="en">

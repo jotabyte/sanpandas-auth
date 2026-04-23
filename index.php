@@ -96,8 +96,9 @@ $pageTitle = 'Auth | San Pandas';
                     style="width: 80px; height: auto; display: block; margin: 0 auto 12px;">
                 <a href="http://academy.sanpandas.com/" class="logo-text" style="font-size: 2rem;">San
                     <span>Pandas</span></a>
-                <p class="text-muted" style="margin-top: 10px;">Enter your registered email to receive a secure login
-                    code.</p>
+                <p id="step1Subheading" class="text-muted" style="margin-top: 10px;">
+                    Enter your registered email to receive a secure login code.
+                </p>
             </div>
 
             <form id="magicLoginForm">
@@ -111,14 +112,19 @@ $pageTitle = 'Auth | San Pandas';
                     <input type="text" id="codeInput" class="form-control" placeholder="0000" maxlength="4"
                         pattern="\d{4}" inputmode="numeric" autocomplete="one-time-code"
                         style="text-align: center; letter-spacing: 4px; font-size: 1.2rem; font-weight: bold;">
-                    <p class="text-muted" style="margin-top: 5px; font-size: 0.8rem; text-align: center;">
-                        We've sent a code to <span id="sentToEmail" style="font-weight:600"></span>.
-                        Didn't receive it?
-                        <a href="#" id="resendLink" style="color: var(--primary-color); font-weight:600; text-decoration:none;">Resend code</a>
-                    </p>
                 </div>
 
                 <button type="submit" id="submitBtn" class="btn btn-primary" style="width: 100%;">Get Code</button>
+
+                <div id="codeHelp" class="text-muted"
+                     style="display: none; margin-top: 14px; font-size: 0.8rem; text-align: center; line-height: 1.55;">
+                    <div>We've sent a code to <span id="sentToEmail" style="font-weight:600"></span>.</div>
+                    <div>
+                        Didn't receive it?
+                        <a href="#" id="resendLink"
+                           style="color: var(--primary-color); font-weight:600; text-decoration:none;">Resend code</a>
+                    </div>
+                </div>
             </form>
 
             <div id="statusMessage" style="margin-top: 20px; text-align: center; font-size: 0.95rem;"></div>
@@ -134,22 +140,26 @@ $pageTitle = 'Auth | San Pandas';
         const PENDING_EMAIL_KEY = 'sanpandas_pending_login_email';
         const RESEND_COOLDOWN_SEC = 20;
 
-        const emailInput  = document.getElementById('emailInput');
-        const codeInput   = document.getElementById('codeInput');
-        const emailGroup  = document.getElementById('emailGroup');
-        const codeGroup   = document.getElementById('codeGroup');
-        const btn         = document.getElementById('submitBtn');
-        const status      = document.getElementById('statusMessage');
-        const resendLink  = document.getElementById('resendLink');
-        const sentToEmail = document.getElementById('sentToEmail');
+        const emailInput     = document.getElementById('emailInput');
+        const codeInput      = document.getElementById('codeInput');
+        const emailGroup     = document.getElementById('emailGroup');
+        const codeGroup      = document.getElementById('codeGroup');
+        const btn            = document.getElementById('submitBtn');
+        const status         = document.getElementById('statusMessage');
+        const resendLink     = document.getElementById('resendLink');
+        const sentToEmail    = document.getElementById('sentToEmail');
+        const step1Subheading = document.getElementById('step1Subheading');
+        const codeHelp       = document.getElementById('codeHelp');
 
         let currentStep = 1;
 
         // ── Step management ──────────────────────────────────────────────────
         function enterCodeStep(email) {
             currentStep = 2;
-            emailGroup.style.display = 'none';
-            codeGroup.style.display  = 'block';
+            emailGroup.style.display     = 'none';
+            codeGroup.style.display      = 'block';
+            step1Subheading.style.display = 'none';
+            codeHelp.style.display        = 'block';
             codeInput.required = true;
             codeInput.value = '';                       // always start empty on refresh
             btn.textContent = 'Verify Code';
@@ -160,8 +170,10 @@ $pageTitle = 'Auth | San Pandas';
 
         function exitCodeStep() {
             currentStep = 1;
-            emailGroup.style.display = 'block';
-            codeGroup.style.display  = 'none';
+            emailGroup.style.display     = 'block';
+            codeGroup.style.display      = 'none';
+            step1Subheading.style.display = '';
+            codeHelp.style.display        = 'none';
             codeInput.required = false;
             codeInput.value = '';
             btn.textContent = 'Get Code';

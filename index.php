@@ -124,6 +124,10 @@ $pageTitle = 'Auth | San Pandas';
                         <a href="#" id="resendLink"
                            style="color: var(--primary-color); font-weight:600; text-decoration:none;">Resend code</a>
                     </div>
+                    <div style="margin-top: 6px;">
+                        <a href="#" id="useDifferentEmailLink"
+                           style="color: var(--primary-color); font-weight:600; text-decoration:none;">Use a different email</a>
+                    </div>
                 </div>
             </form>
 
@@ -252,6 +256,16 @@ $pageTitle = 'Auth | San Pandas';
             resendLink.style.pointerEvents = '';
             resendLink.textContent = 'Resend code';
         }
+
+        // ── "Use a different email" → return to Step 1 ──────────────────────
+        document.getElementById('useDifferentEmailLink').addEventListener('click', (e) => {
+            e.preventDefault();
+            exitCodeStep();
+            status.innerHTML = '';
+            resetResendLink();
+            emailInput.value = '';
+            setTimeout(() => emailInput.focus(), 30);
+        });
 
         // ── Main form submit (Get Code → Verify Code) ────────────────────────
         document.getElementById('magicLoginForm').addEventListener('submit', function (e) {

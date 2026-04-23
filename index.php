@@ -109,14 +109,16 @@ $pageTitle = 'Auth | San Pandas';
                 <div class="form-group" id="codeGroup" style="display: none;">
                     <label>4-Digit Security Code</label>
                     <input type="text" id="codeInput" class="form-control" placeholder="0000" maxlength="4"
-                        pattern="\d{4}"
+                        pattern="\d{4}" inputmode="numeric" autocomplete="one-time-code"
                         style="text-align: center; letter-spacing: 4px; font-size: 1.2rem; font-weight: bold;">
-                    <p class="text-muted" style="margin-top: 5px; font-size: 0.8rem; text-align: center;">We've sent a
-                        code to your email.</p>
+                    <p class="text-muted" style="margin-top: 5px; font-size: 0.8rem; text-align: center;">
+                        We've sent a code to <span id="sentToEmail" style="font-weight:600"></span>.
+                        Didn't receive it?
+                        <a href="#" id="resendLink" style="color: var(--primary-color); font-weight:600; text-decoration:none;">Resend code</a>
+                    </p>
                 </div>
 
-                <button type="submit" id="submitBtn" class="btn btn-primary" style="width: 100%;">Send Login
-                    Code</button>
+                <button type="submit" id="submitBtn" class="btn btn-primary" style="width: 100%;">Get Code</button>
             </form>
 
             <div id="statusMessage" style="margin-top: 20px; text-align: center; font-size: 0.95rem;"></div>
@@ -129,14 +131,121 @@ $pageTitle = 'Auth | San Pandas';
     </div>
 
     <script>
+        const PENDING_EMAIL_KEY = 'sanpandas_pending_login_email';
+        const RESEND_COOLDOWN_SEC = 20;
+
+        const emailInput  = document.getElementById('emailInput');
+        const codeInput   = document.getElementById('codeInput');
+        const emailGroup  = document.getElementById('emailGroup');
+        const codeGroup   = document.getElementById('codeGroup');
+        const btn         = document.getElementById('submitBtn');
+        const status      = document.getElementById('statusMessage');
+        const resendLink  = document.getElementById('resendLink');
+        const sentToEmail = document.getElementById('sentToEmail');
+
         let currentStep = 1;
 
+        // ── Step management ──────────────────────────────────────────────────
+        function enterCodeStep(email) {
+            currentStep = 2;
+            emailGroup.style.display = 'none';
+            codeGroup.style.display  = 'block';
+            codeInput.required = true;
+            codeInput.value = '';                       // always start empty on refresh
+            btn.textContent = 'Verify Code';
+            sentToEmail.textContent = email;
+            sessionStorage.setItem(PENDING_EMAIL_KEY, email);
+            setTimeout(() => codeInput.focus(), 30);
+        }
+
+        function exitCodeStep() {
+            currentStep = 1;
+            emailGroup.style.display = 'block';
+            codeGroup.style.display  = 'none';
+            codeInput.required = false;
+            codeInput.value = '';
+            btn.textContent = 'Get Code';
+            sessionStorage.removeItem(PENDING_EMAIL_KEY);
+        }
+
+        // ── On page load: restore Step 2 if a request was already made ───────
+        // A refresh in the middle of the flow just clears the code input, not
+        // the whole step — the user doesn't have to re-enter their email.
+        (function restoreState() {
+            const saved = sessionStorage.getItem(PENDING_EMAIL_KEY);
+            if (saved) {
+                emailInput.value = saved;
+                enterCodeStep(saved);
+            }
+        })();
+
+        // ── Request-code helper (used by initial submit AND resend) ──────────
+        async function requestCode(email) {
+            const fd = new FormData();
+            fd.append('action', 'request_magic_link');
+            fd.append('email', email);
+            const res  = await fetch('api/auth.php', { method: 'POST', body: fd });
+            return res.json();
+        }
+
+        // ── Resend flow ──────────────────────────────────────────────────────
+        resendLink.addEventListener('click', async (e) => {
+            e.preventDefault();
+            if (resendLink.dataset.disabled === '1') return;
+
+            const email = sessionStorage.getItem(PENDING_EMAIL_KEY) || emailInput.value.trim();
+            if (!email) return;
+
+            resendLink.dataset.disabled = '1';
+            resendLink.style.opacity = '0.6';
+            resendLink.style.pointerEvents = 'none';
+            resendLink.textContent = 'Sending…';
+            status.innerHTML = '';
+
+            try {
+                const data = await requestCode(email);
+                if (data.success) {
+                    status.style.color = '#25D366';
+                    status.textContent = 'Code resent — check your inbox.';
+                    startResendCooldown();
+                } else {
+                    status.style.color = '#D32F2F';
+                    status.textContent = data.error || 'Could not resend code.';
+                    resetResendLink();
+                }
+            } catch (err) {
+                status.style.color = '#D32F2F';
+                status.textContent = 'Network error resending code.';
+                resetResendLink();
+            }
+        });
+
+        function startResendCooldown() {
+            let left = RESEND_COOLDOWN_SEC;
+            resendLink.textContent = `Resend code (${left}s)`;
+            const tick = setInterval(() => {
+                left -= 1;
+                if (left <= 0) {
+                    clearInterval(tick);
+                    resetResendLink();
+                } else {
+                    resendLink.textContent = `Resend code (${left}s)`;
+                }
+            }, 1000);
+        }
+
+        function resetResendLink() {
+            resendLink.dataset.disabled = '';
+            resendLink.style.opacity = '';
+            resendLink.style.pointerEvents = '';
+            resendLink.textContent = 'Resend code';
+        }
+
+        // ── Main form submit (Get Code → Verify Code) ────────────────────────
         document.getElementById('magicLoginForm').addEventListener('submit', function (e) {
             e.preventDefault();
-            const email = document.getElementById('emailInput').value;
-            const code = document.getElementById('codeInput').value;
-            const btn = document.getElementById('submitBtn');
-            const status = document.getElementById('statusMessage');
+            const email = emailInput.value.trim();
+            const code  = codeInput.value.trim();
 
             status.innerHTML = '';
 
@@ -144,38 +253,27 @@ $pageTitle = 'Auth | San Pandas';
                 btn.disabled = true;
                 btn.textContent = 'Sending...';
 
-                const fd = new FormData();
-                fd.append('action', 'request_magic_link');
-                fd.append('email', email);
-
-                fetch('api/auth.php', { method: 'POST', body: fd })
-                    .then(res => res.json())
+                requestCode(email)
                     .then(data => {
                         btn.disabled = false;
-
                         if (data.success) {
-                            btn.textContent = 'Verify Code';
                             status.style.color = '#25D366';
                             status.textContent = data.message;
-
-                            // Switch UI to Step 2
-                            document.getElementById('emailGroup').style.display = 'none';
-                            document.getElementById('codeGroup').style.display = 'block';
-                            document.getElementById('codeInput').required = true;
-                            currentStep = 2;
+                            enterCodeStep(email);
                         } else {
                             status.style.color = '#D32F2F';
                             status.textContent = data.error || 'An error occurred';
-                            btn.textContent = 'Send Login Code';
+                            btn.textContent = 'Get Code';
                         }
                     })
-                    .catch(err => {
+                    .catch(() => {
                         btn.disabled = false;
-                        btn.textContent = 'Send Login Code';
+                        btn.textContent = 'Get Code';
                         status.style.color = '#D32F2F';
                         status.textContent = 'Network error requesting code.';
                     });
-            } else if (currentStep === 2) {
+
+            } else {
                 btn.disabled = true;
                 btn.textContent = 'Verifying...';
 
@@ -188,6 +286,7 @@ $pageTitle = 'Auth | San Pandas';
                     .then(res => res.json())
                     .then(data => {
                         if (data.success) {
+                            sessionStorage.removeItem(PENDING_EMAIL_KEY);
                             status.style.color = '#25D366';
                             status.innerHTML = '<strong>Success! Redirecting to dashboard...</strong>';
                             setTimeout(() => {
@@ -200,7 +299,7 @@ $pageTitle = 'Auth | San Pandas';
                             status.textContent = data.error || 'Invalid code.';
                         }
                     })
-                    .catch(err => {
+                    .catch(() => {
                         btn.disabled = false;
                         btn.textContent = 'Verify Code';
                         status.style.color = '#D32F2F';

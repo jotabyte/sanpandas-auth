@@ -16,6 +16,21 @@ $pageTitle = 'Auth | San Pandas';
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/style.css">
     <style>
+        /* ── Auth uses exactly two font sizes (permanent rule):
+              large for titles, small for everything else. */
+        .login-card {
+            --auth-font-lg: 2rem;
+            --auth-font-sm: 0.9rem;
+        }
+        .login-card,
+        .login-card * {
+            font-size: var(--auth-font-sm) !important;
+        }
+        .login-card .auth-title,
+        .login-card .auth-title * {
+            font-size: var(--auth-font-lg) !important;
+        }
+
         .login-page {
             height: 100vh;
             width: 100vw;
@@ -94,7 +109,7 @@ $pageTitle = 'Auth | San Pandas';
             <div style="text-align: center; margin-bottom: 30px;">
                 <img src="https://sanpandas.com/media/identity/logo-nbg.webp" alt="San Pandas"
                     style="width: 80px; height: auto; display: block; margin: 0 auto 12px;">
-                <a href="http://academy.sanpandas.com/" class="logo-text" style="font-size: 2rem;">San
+                <a href="http://academy.sanpandas.com/" class="logo-text auth-title">San
                     <span>Pandas</span></a>
                 <p id="step1Subheading" class="text-muted" style="margin-top: 10px;">
                     Enter your registered email to receive a secure login code.
@@ -111,13 +126,13 @@ $pageTitle = 'Auth | San Pandas';
                     <label>4-Digit Security Code</label>
                     <input type="text" id="codeInput" class="form-control" placeholder="0000" maxlength="4"
                         pattern="\d{4}" inputmode="numeric" autocomplete="one-time-code"
-                        style="text-align: center; letter-spacing: 4px; font-size: 1.2rem; font-weight: bold;">
+                        style="text-align: center; letter-spacing: 4px; font-weight: bold;">
                 </div>
 
                 <button type="submit" id="submitBtn" class="btn btn-primary" style="width: 100%;">Get Code</button>
 
                 <div id="codeHelp" class="text-muted"
-                     style="display: none; margin-top: 14px; font-size: 0.8rem; text-align: center; line-height: 1.55;">
+                     style="display: none; margin-top: 14px; text-align: center; line-height: 1.55;">
                     <div>We've sent a code to <span id="sentToEmail" style="font-weight:600"></span>.</div>
                     <div>
                         Didn't receive it?
@@ -131,9 +146,9 @@ $pageTitle = 'Auth | San Pandas';
                 </div>
             </form>
 
-            <div id="statusMessage" style="margin-top: 20px; text-align: center; font-size: 0.95rem;"></div>
+            <div id="statusMessage" style="margin-top: 20px; text-align: center;"></div>
 
-            <div style="text-align: center; margin-top: 20px; font-size: 0.9rem;">
+            <div style="text-align: center; margin-top: 20px;">
                 <a href="http://academy.sanpandas.com/" style="color: var(--text-muted);"><span
                         style="margin-right:5px;">←</span> Back to Website</a>
             </div>
